@@ -1,15 +1,19 @@
-mod scraper;
-
-
 ///use dotenv::dotenv;
 ///use std::env;
 use serenity::async_trait;
 use serenity::model::channel::Message;
 use serenity::model::gateway::Ready;
 use serenity::prelude::*;
+
+mod scraper;
+
+
 //use std::fmt::Debug;
 
+// TODO maybe comment some of the code that wasn't copy/pasted, hmm?  Ever think about that?  No?
+
 struct Bot;
+
 #[async_trait]
 impl EventHandler for Bot {
     // Set a handler for the `message` event - so that whenever a new message

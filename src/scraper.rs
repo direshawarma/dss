@@ -1,8 +1,10 @@
-mod databasehandling;
-
 use std::fs;
+
 //use std::process::exit;
 use scraper::{Html, Selector};
+
+mod databasehandling;
+
 //use serenity::futures::future::ok;
 //use serenity::json::prelude::to_string;
 
@@ -24,10 +26,10 @@ pub fn scrape(url: &str) {
         a.push(each)
     }
 
-    for element in &a.rev() { // todo figure out how to get rev() to work on this without DoubleEndedIterator
+    for element in &a { // todo figure out how to get .rev() to work on this without DoubleEndedIterator so that we can reverse order the element items before processing them
         let url = element.value().attr("href").unwrap().to_string();
         let title = element.value().attr("title").unwrap().to_string();
-        databasehandling::db_add(&showtitle,title,url);
+        databasehandling::db_add(&showtitle, title, url);
     }
 
 }
