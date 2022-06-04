@@ -6,7 +6,7 @@ use scraper::{Html, Selector};
 mod database_handling;
 
 pub fn scrape(url: &str) {
-    println!("In file {}", url);
+    //println!("In file {}", url);
 
     let html = fs::read_to_string(url)
         .expect("Something went wrong reading the file");
