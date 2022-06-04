@@ -27,4 +27,7 @@ pub async fn scrape(url: &str) {
         let title = element.value().attr("title").unwrap().to_string();
         database_handling::db_add(&seriestitle, title, url).await;
     }
+
+    return
+    //TODO this needs to return a future
 }

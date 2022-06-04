@@ -9,17 +9,21 @@ use rusqlite::{Connection, params};
 struct Episode {
     series: String,
     url: String,
-    eptitle: String,
+    title: String,
     scraped: f64,
     episode: i32,
     season: i32,
 }
 
-pub async fn db_add(seriestitle: &String, title: String, url: String) {
-    let dbconn = Connection::open("db.db").unwrap();
-    let series_db = series_db_create(&dbconn); // prep call
-    let episode_db = episode_db_create(&dbconn);
-    futures::join!(series_db,episode_db); // execute concurrently and wait until both functions are done
+
+pub async fn db_add(series_title: &String, title: String, url: String) {
+    let con = Connection::open("db.db").unwrap();
+
+
+    db_create(&con);
+
+
+    //futures::join!(series_db,episode_db); // execute concurrently and wait until both functions are done
 
     lazy_static! {
         static ref SEASONREGEX:Regex = Regex::new(r"[Ss]eason:? (\d+)").unwrap();
@@ -29,41 +33,39 @@ pub async fn db_add(seriestitle: &String, title: String, url: String) {
     }
     ;
 
-    let string = format!("{} {}", r"Watch", &seriestitle);
+    let string = format!("{} {}", r"Watch", &series_title);
     let title_killer: Regex = Regex::new(&string).unwrap();
 
     let mut entry = Episode {
-        series: seriestitle.to_string(),
+        series: series_title.to_string(),
         url: url.to_string(),
-        eptitle: title_killer.replace(title.as_str(), "$after").to_string(),
+        title: title_killer.replace(title.as_str(), "$after").to_string(),
         scraped: SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_secs_f64(),
         ..Default::default()
     };
 
-    for cap in SEASONREGEX.captures_iter(&entry.eptitle.to_string()) {
+    for cap in SEASONREGEX.captures_iter(&entry.title.to_string()) {
         entry.season = cap[1].parse::<i32>().unwrap();
-        entry.eptitle = SEASONREGEX.replace(&entry.eptitle, "$before $after").to_string();
-        break;
+        entry.title = SEASONREGEX.replace(&entry.title, "$before $after").to_string();
     }
-    for cap in EPISODEREGEX.captures_iter(&entry.eptitle.to_string()) {
+    for cap in EPISODEREGEX.captures_iter(&entry.title.to_string()) {
         entry.episode = cap[1].parse::<i32>().unwrap();
-        entry.eptitle = EPISODEREGEX.replace(&entry.eptitle, "$before $after").to_string();
-        break;
+        entry.title = EPISODEREGEX.replace(&entry.title, "$before $after").to_string();
     }
 
-    entry.series = SPACEKILLER.replace(&entry.eptitle, "$before $after").to_string();
-    entry.eptitle = BEGINFIXER.replace(&entry.eptitle, |caps: &Captures| { format!("{}", &caps[1]) }).to_string();
-    // FIXME things still don't wind up quite right with entry.eptitle using simple regex
+    entry.series = SPACEKILLER.replace(&entry.title, "$before $after").to_string();
+    entry.title = BEGINFIXER.replace(&entry.title, |caps: &Captures| { format!("{}", &caps[1]) }).to_string();
+    // FIXME things still don't wind up quite right with entry.title using simple regex
     //  TODO make a more robust way of figuring out episode title names and removing fluff
 
 
-    match dbconn.execute(
-        "INSERT INTO episodes (series, url, eptitle, scraped, season, episode) VALUES (?1, ?2, ?3, ?4, ?5, ?6)",
-        params![&entry.series, &entry.url, &entry.eptitle, &entry.scraped, &entry.season, &entry.episode],
+    match con.execute(
+        "INSERT INTO episodes (series, url, title, scraped, season, episode) VALUES (?1, ?2, ?3, ?4, ?5, ?6)",
+        params![&entry.series, &entry.url, &entry.title, &entry.scraped, &entry.season, &entry.episode],
     ) {
-        Err(rusqlite::Error::SqliteFailure(errnum, errmsg)) => {
-            if errnum.extended_code.eq(&1555) { () } else { panic!("Error -> {:?}: {:?}", errnum, errmsg); }
-        },
+        Err(rusqlite::Error::SqliteFailure(E, error_message)) => {
+            if E.extended_code.eq(&1545) { () } else { panic!("Error -> {:?}: {:?}", E, error_message); }
+        }
         Ok(_) => { () },
         Err(e) => {
             panic!("Error: {}", e.to_string());
@@ -71,53 +73,41 @@ pub async fn db_add(seriestitle: &String, title: String, url: String) {
     };
 }
 
-async fn series_add() {}
+
+// TODO find out if a create check or insert check are as fast as directly checking or not because this
+//   gets called for every episode read which might give us some I/O issues
+// TODO use row id is a much faster, functionally equivalent substitute for actually creating an auto-incrementing
+//   index so implement row id
 
 
-// TODO find out if a create check or insert check are as fast as directly checking or not because this gets called for every episode read which might give us some I/O issues
-async fn series_db_create(connection: &Connection) { // TODO use rowid is a much faster, functionally equivalent substitute for actually creating an autoincrementing index so implement rowid
-    match connection.execute("
-        CREATE TABLE series (
+async fn db_create(con: &Connection) {
+    let call = "CREATE TABLE series (
             series TEXT,
             url TEXT NOT NULL PRIMARY KEY,
             last_retrieved FLOAT,
-            urltype TEXT,
-            parentrow INT
-    )", params![],
-    ) {
-        Err(rusqlite::Error::SqliteFailure(errnum, errmsg)) => {
-            if errnum.extended_code.eq(&1) && errmsg.as_ref().unwrap() == "table series already exists" {
-                //println!("Table series already exists")
-            } else {
-                panic!("Error -> {:?}: {:?}", errnum, errmsg);
-            }
-        },
-        Ok(_) => { () } // println!("series db init ok") },
-        Err(e) => {
-            panic!("Error: {}", e.to_string());
-        }
-    };
-}
-
-async fn episode_db_create(connection: &Connection) {
-    match connection.execute("
+            url_type TEXT,
+            parent_row INT);
         CREATE TABLE episodes (
-            series TEXT,
-            url TEXT NOT NULL PRIMARY KEY,
-            eptitle TEXT,
-            scraped FLOAT,
-            season INT,
-            episode INT
-    )", params![],
-    ) {
-        Err(rusqlite::Error::SqliteFailure(errnum, errmsg)) => {
-            if errnum.extended_code.eq(&1) && errmsg.as_ref().unwrap() == "table episodes already exists" {
-                //println!("Table episodes already exists")
-            } else {
-                panic!("Error -> {:?}: {:?}", errnum, errmsg);
+        series TEXT,
+        url TEXT NOT NULL PRIMARY KEY,
+        title TEXT,
+        scraped FLOAT,
+        season INT,
+        episode INT)";
+
+    match con.execute(&call, []) {
+        Err(rusqlite::Error::SqliteFailure(E, error_message)) => {
+            lazy_static! {
+                static ref TABLEEXISTS:Regex = Regex::new(r"^already exists$").unwrap();
             }
+            ;
+            //if E.eq(rusqlite::Error::()) && TABLEEXISTS.is_match(&error_message.unwrap().as_str())  {}
+            //println!("Table {}} already exists",)}
+            //else {
+            panic!("Error -> {:?}: {:?}", E, error_message);
+            //}
         },
-        Ok(_) => { () } // println!("episode db init ok") },
+        Ok(_) => { () }, // println!("episode db init ok") },
         Err(e) => {
             panic!("Error: {}", e.to_string());
         }

@@ -1,10 +1,14 @@
+extern crate core;
+
 use futures::executor::block_on;
+use futures::poll;
 ///use dotenv::dotenv;
 ///use std::env;
 use serenity::async_trait;
 use serenity::model::channel::Message;
 use serenity::model::gateway::Ready;
 use serenity::prelude::*;
+use tokio;
 
 //Is there a better way to load this in?  Should I have even bothered with a new file?
 mod wco_scraper;
@@ -41,15 +45,12 @@ impl EventHandler for Bot {
     }
 }
 
-//#[tokio::main]
-fn main() {
-    block_on(go_go_gadget_async());
-}
-
-async fn go_go_gadget_async() {
+#[tokio::main]
+async fn main() {
     // TODO check if files are stale and delete/redownload stale files to cache
-    block_on(wco_scraper::scrape("html/jojostoneocean.html"));
+    let x = wco_scraper::scrape("html/jojostoneocean.html").await;
     // TODO loop through a list of cached files
+    futures::poll!(x);
 
     // Configure the client with your Discord bot token in the environment.
     let token = dotenv::var("DISCORD_TOKEN").expect("Expected a token in the environment");
