@@ -5,12 +5,9 @@ use serenity::model::channel::Message;
 use serenity::model::gateway::Ready;
 use serenity::prelude::*;
 
-mod scraper;
+//Is there a better way to load this in?  Should I have even bothered with a new file?
+mod wco_scraper;
 
-
-//use std::fmt::Debug;
-
-// TODO maybe comment some of the code that wasn't copy/pasted, hmm?  Ever think about that?  No?
 
 struct Bot;
 
@@ -42,12 +39,11 @@ impl EventHandler for Bot {
     async fn ready(&self, _: Context, ready: Ready) {
         println!("{} is connected!", ready.user.name);
     }
-
 }
 
 #[tokio::main]
 async fn main() {
-    scraper::scrape("src/html/jojostoneocean.html");
+    wco_scraper::scrape("src/html/jojostoneocean.html");
 
     // Configure the client with your Discord bot token in the environment.
     let token = dotenv::var("DISCORD_TOKEN").expect("Expected a token in the environment");

@@ -1,9 +1,5 @@
-//use std::borrow::BorrowMut;
-//use std::fmt::Display;
-//use std::default::default;
 use std::time::{SystemTime, UNIX_EPOCH};
 
-//, Result};
 use lazy_static::lazy_static;
 use regex::{Captures, Regex};
 use rusqlite::{Connection, params};
@@ -31,22 +27,17 @@ pub fn db_add(showtitle:&String,title:String,url:String) {
     }
     ;
 
-    //entry.eptitle = SEASONREGEX.replace(&entry.eptitle.to_string(), "$before $after").to_string();
-    /*
-
-*/
-    let string = format!("{} {}",r"Watch", &showtitle);
-    let title_killer:Regex = Regex::new(&string).unwrap();
+    let string = format!("{} {}", r"Watch", &showtitle);
+    let title_killer: Regex = Regex::new(&string).unwrap();
 
     let mut entry = Episode {
         show: showtitle.to_string(),
         url: url.to_string(),
-        eptitle: title.to_string(),
+        eptitle: title_killer.replace(title.as_str(), "$after").to_string(),
         scraped: SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_secs_f64(),
         episode: 0,
-        season: 1
+        season: 1,
     };
-    entry.eptitle = title_killer.replace(&entry.eptitle, "$after").to_string();
 
     for cap in SEASONREGEX.captures_iter(&entry.eptitle.to_string()) {
         entry.season = cap[1].parse::<i32>().unwrap();

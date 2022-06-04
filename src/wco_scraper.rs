@@ -1,13 +1,9 @@
 use std::fs;
 
-//use std::process::exit;
 use scraper::{Html, Selector};
 
-mod databasehandling;
-
-//use serenity::futures::future::ok;
-//use serenity::json::prelude::to_string;
-
+// is there a better way to do this?  I feel like I'm doing something wrong with this
+mod database_handling;
 
 pub fn scrape(url: &str) {
     println!("In file {}", url); // TODO convert this to use downloaded html instead of a local file. Keep local file handling for testing so we don't abuse the servers we scrape from
@@ -29,7 +25,7 @@ pub fn scrape(url: &str) {
     for element in &a { // todo figure out how to get .rev() to work on this without DoubleEndedIterator so that we can reverse order the element items before processing them
         let url = element.value().attr("href").unwrap().to_string();
         let title = element.value().attr("title").unwrap().to_string();
-        databasehandling::db_add(&showtitle, title, url);
+        database_handling::db_add(&showtitle, title, url);
     }
 
 }
