@@ -1,3 +1,4 @@
+use futures::executor::block_on;
 ///use dotenv::dotenv;
 ///use std::env;
 use serenity::async_trait;
@@ -31,7 +32,6 @@ impl EventHandler for Bot {
     }
 
     // Set a handler to be called on the `ready` event. This is called when a
-    // shard is booted, and a READY payload is sent by Discord. This payload
     // contains data like the current user's guild Ids, current user data,
     // private channels, and more.
     //
@@ -41,9 +41,15 @@ impl EventHandler for Bot {
     }
 }
 
-#[tokio::main]
-async fn main() {
-    wco_scraper::scrape("src/html/jojostoneocean.html");
+//#[tokio::main]
+fn main() {
+    block_on(go_go_gadget_async());
+}
+
+async fn go_go_gadget_async() {
+    // TODO check if files are stale and delete/redownload stale files to cache
+    block_on(wco_scraper::scrape("html/jojostoneocean.html"));
+    // TODO loop through a list of cached files
 
     // Configure the client with your Discord bot token in the environment.
     let token = dotenv::var("DISCORD_TOKEN").expect("Expected a token in the environment");

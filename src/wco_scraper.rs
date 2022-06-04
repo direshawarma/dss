@@ -5,7 +5,7 @@ use scraper::{Html, Selector};
 // is there a better way to do this?  I feel like I'm doing something wrong with this
 mod database_handling;
 
-pub fn scrape(url: &str) {
+pub async fn scrape(url: &str) {
     //println!("In file {}", url);
 
     let html = fs::read_to_string(url)
@@ -25,6 +25,6 @@ pub fn scrape(url: &str) {
     for element in &a {
         let url = element.value().attr("href").unwrap().to_string();
         let title = element.value().attr("title").unwrap().to_string();
-        database_handling::db_add(&seriestitle, title, url);
+        database_handling::db_add(&seriestitle, title, url).await;
     }
 }
