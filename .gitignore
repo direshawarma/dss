@@ -1,5 +1,5 @@
 /target
 .env
-/src/html/*.html
+*.html
 /.idea
 *.db
