@@ -1,10 +1,12 @@
+use std::borrow::BorrowMut;
+use std::fmt::Display;
 //use std::default::default;
 use std::time::{SystemTime, UNIX_EPOCH};
-use rusqlite::{Connection, params}; //, Result};
-use lazy_static::lazy_static;
-use regex::{Regex, Captures};
-use std::fmt::Display;
 
+//, Result};
+use lazy_static::lazy_static;
+use regex::{Captures, Regex};
+use rusqlite::{Connection, params};
 
 #[derive(Debug)]
 struct Episode {
@@ -59,13 +61,20 @@ pub fn db_add(showtitle:&String,title:String,url:String) {
 
     entry.eptitle = SPACEKILLER.replace(&entry.eptitle,"$before $after").to_string();
     entry.eptitle = BEGINFIXER.replace(&entry.eptitle,|caps: &Captures| {format!("{}",&caps[1])}).to_string();
-    println!("{:?}", &entry);
 
 
-     dbconn.execute(
+    match dbconn.execute(
         "INSERT INTO shows (show, url, eptitle, scraped, season, episode) VALUES (?1, ?2, ?3, ?4, ?5, ?6)",
-        params![&entry.show, &entry.url, &entry.eptitle, &entry.scraped, &entry.season, &entry.episode]
-    ) ;
+        params![&entry.show, &entry.url, &entry.eptitle, &entry.scraped, &entry.season, &entry.episode],
+    ) {
+        Err(rusqlite::Error::SqliteFailure(errnum, errmsg)) => {
+            if errnum.extended_code.eq(&1555) { () } else { panic!("Error -> {:?}: %%% {:?}", errnum, errmsg); }
+        },
+        Ok(_) => { () },
+        Err(e) => {
+            panic!("Error: {}", e.to_string());
+        }
+    };
 }
 
 fn db_create(connection:&Connection) {
@@ -78,6 +87,6 @@ fn db_create(connection:&Connection) {
             scraped FLOAT,
             season INT,
             episode INT
-    )", params![]
-    ).unwrap_or(Default::default());
+    )", params![],
+    ).unwrap_or(Default::default()); // TODO add error handling
 }
