@@ -1,4 +1,4 @@
 /target
 .env
-/src/html/
+/src/html/*.html
 /.idea
