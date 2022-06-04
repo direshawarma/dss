@@ -12,8 +12,8 @@ it will get an eclectic assortment of features over time.
 
 ### Implemented Features
 
-* webscraping
-    * but not the web part yet
+* ~~webscraping~~ downloaded html scraping
+  * but not the web part yet
 * the barest bones of database handling
 
 ### Features of the *Future*
