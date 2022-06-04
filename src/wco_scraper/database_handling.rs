@@ -4,21 +4,20 @@ use lazy_static::lazy_static;
 use regex::{Captures, Regex};
 use rusqlite::{Connection, params};
 
-#[derive(Debug)]
+#[derive(Default)]
 struct Episode {
     series: String,
     url: String,
     eptitle: String,
     scraped: f64,
     episode: i32,
-    season: i32, // Someday Sesame Street might manage to break this limit
+    season: i32,
 }
 
 pub fn db_add(seriestitle: &String, title: String, url: String) {
     let dbconn = Connection::open("db.db").unwrap();
     series_db_create(&dbconn);
     episode_db_create(&dbconn);
-
 
     lazy_static! {
         static ref SEASONREGEX:Regex = Regex::new(r"[Ss]eason:? (\d+)").unwrap();
@@ -36,8 +35,7 @@ pub fn db_add(seriestitle: &String, title: String, url: String) {
         url: url.to_string(),
         eptitle: title_killer.replace(title.as_str(), "$after").to_string(),
         scraped: SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_secs_f64(),
-        episode: 0,
-        season: 1,
+        ..Default::default()
     };
 
     for cap in SEASONREGEX.captures_iter(&entry.eptitle.to_string()) {
@@ -84,9 +82,13 @@ fn series_db_create(connection: &Connection) { // TODO use rowid is a much faste
     )", params![],
     ) {
         Err(rusqlite::Error::SqliteFailure(errnum, errmsg)) => {
-            if errnum.extended_code.eq(&1) && errmsg.as_ref().unwrap() == "table series already exists" { println!("Table series already exists") } else { panic!("Error -> {:?}: {:?}", errnum, errmsg); }
+            if errnum.extended_code.eq(&1) && errmsg.as_ref().unwrap() == "table series already exists" {
+                //println!("Table series already exists")
+            } else {
+                panic!("Error -> {:?}: {:?}", errnum, errmsg);
+            }
         },
-        Ok(_) => { println!("series db init ok") },
+        Ok(_) => { () } // println!("series db init ok") },
         Err(e) => {
             panic!("Error: {}", e.to_string());
         }
@@ -105,9 +107,13 @@ fn episode_db_create(connection: &Connection) {
     )", params![],
     ) {
         Err(rusqlite::Error::SqliteFailure(errnum, errmsg)) => {
-            if errnum.extended_code.eq(&1) && errmsg.as_ref().unwrap() == "table episodes already exists" { println!("Table episodes already exists") } else { panic!("Error -> {:?}: {:?}", errnum, errmsg); }
+            if errnum.extended_code.eq(&1) && errmsg.as_ref().unwrap() == "table episodes already exists" {
+                //println!("Table episodes already exists")
+            } else {
+                panic!("Error -> {:?}: {:?}", errnum, errmsg);
+            }
         },
-        Ok(_) => { println!("episode db init ok") },
+        Ok(_) => { () } // println!("episode db init ok") },
         Err(e) => {
             panic!("Error: {}", e.to_string());
         }
