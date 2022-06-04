@@ -2,4 +2,4 @@
 .env
 /src/html/*.html
 /.idea
-db.db
+*.db
