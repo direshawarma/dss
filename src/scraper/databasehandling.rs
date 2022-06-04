@@ -1,5 +1,5 @@
-use std::borrow::BorrowMut;
-use std::fmt::Display;
+//use std::borrow::BorrowMut;
+//use std::fmt::Display;
 //use std::default::default;
 use std::time::{SystemTime, UNIX_EPOCH};
 
@@ -68,7 +68,7 @@ pub fn db_add(showtitle:&String,title:String,url:String) {
         params![&entry.show, &entry.url, &entry.eptitle, &entry.scraped, &entry.season, &entry.episode],
     ) {
         Err(rusqlite::Error::SqliteFailure(errnum, errmsg)) => {
-            if errnum.extended_code.eq(&1555) { () } else { panic!("Error -> {:?}: %%% {:?}", errnum, errmsg); }
+            if errnum.extended_code.eq(&1555) { () } else { panic!("Error -> {:?}: {:?}", errnum, errmsg); }
         },
         Ok(_) => { () },
         Err(e) => {
@@ -78,7 +78,7 @@ pub fn db_add(showtitle:&String,title:String,url:String) {
 }
 
 fn db_create(connection:&Connection) {
-    connection.execute(
+    match connection.execute(
         "
         CREATE TABLE shows (
             show TEXT,
@@ -88,5 +88,13 @@ fn db_create(connection:&Connection) {
             season INT,
             episode INT
     )", params![],
-    ).unwrap_or(Default::default()); // TODO add error handling
+    ) {
+        Err(rusqlite::Error::SqliteFailure(errnum, errmsg)) => {
+            if errnum.extended_code.eq(&1) { () } else { panic!("Error -> {:?}: {:?}", errnum, errmsg); }
+        },
+        Ok(_) => { () },
+        Err(e) => {
+            panic!("Error: {}", e.to_string());
+        }
+    };
 }
