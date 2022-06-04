@@ -27,5 +27,4 @@ pub fn scrape(url: &str) {
         let title = element.value().attr("title").unwrap().to_string();
         database_handling::db_add(&showtitle, title, url);
     }
-
 }
