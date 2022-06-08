@@ -1,18 +1,16 @@
 extern crate core;
 
-use futures::executor::block_on;
-use futures::poll;
+//use futures::executor::block_on;
+//use futures::poll;
 ///use dotenv::dotenv;
 ///use std::env;
 use serenity::async_trait;
 use serenity::model::channel::Message;
 use serenity::model::gateway::Ready;
 use serenity::prelude::*;
-use tokio;
 
 //Is there a better way to load this in?  Should I have even bothered with a new file?
 mod wco_scraper;
-
 
 struct Bot;
 
@@ -21,7 +19,7 @@ impl EventHandler for Bot {
     // Set a handler for the `message` event - so that whenever a new message
     // is received - the closure (or function) passed will be called.
     //
-    // Event handlers are dispatched through a threadpool, and so multiple
+    // Event handlers are dispatched through a thread pool, and so multiple
     // events can be dispatched simultaneously.
     async fn message(&self, ctx: Context, msg: Message) {
         if msg.content == "!update" {
@@ -47,8 +45,8 @@ impl EventHandler for Bot {
 
 #[tokio::main]
 async fn main() {
-    // TODO check if files are stale and delete/redownload stale files to cache
-    let x = wco_scraper::scrape("html/jojostoneocean.html").await;
+    // TODO check if files are stale and delete/re-download stale files to cache
+    let x = wco_scraper:: // ::scrape("html/jojostoneocean.html").await;
     // TODO loop through a list of cached files
     futures::poll!(x);
 
