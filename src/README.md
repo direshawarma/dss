@@ -13,8 +13,10 @@ it will get an eclectic assortment of features over time.
 ### Implemented Features
 
 * ~~webscraping~~ downloaded html scraping
-  * but not the web part yet
+    * but not the web part yet
 * the barest bones of database handling
+* I enabled gitlab webhoooks for the discord channel so i guess that's something even if it's not actually part of the
+  bot but a feature of git
 
 ### Features of the *Future*
 
